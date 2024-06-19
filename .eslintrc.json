@@ -1,0 +1,74 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "eslint-config-airbnb",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:react/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+      "ecmaFeatures": {
+          "jsx": true
+      },
+      "ecmaVersion": "latest",
+      "sourceType": "module"
+  },
+  "plugins": [
+      "eslint-plugin-react",
+      "@typescript-eslint",
+      "eslint-plugin-import"
+  ],
+  "rules": {
+    "linebreak-style": 0,
+    "no-unused-vars": "warn",
+    "camelcase": "off",
+    "arrow-parens":"off",
+    "default-case": "off",
+    "no-console": "warn",
+    "no-trailing-spaces": "off",
+    "import/prefer-default-export" : "off",
+    "no-underscore-dangle": "off",
+    "react/function-component-definition": "off",
+    "react/react-in-jsx-scope": "off",
+    "react/prop-types": "off",
+    "react/jsx-no-useless-fragment": "off",
+    "no-useless-return": "off",
+    "react/jsx-props-no-spreading": "off",
+    "consistent-return": "off",
+    "import/extensions": [
+      "error",
+      {
+        "js": "never",
+        "jsx": "never",
+        "ts": "never",
+        "tsx": "never",
+        "json": "always"
+      }
+    ],
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }]
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/redux/*Slice.js",
+        "src/redux/*/*Slice.js",
+        "src/redux/*/*/*Reducer.js",
+        "src/redux/*/*/*/*Reducer.js"
+      ],
+      "rules": {
+        "no-param-reassign": "off"
+      }
+    }
+  ],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
+  }
+}
