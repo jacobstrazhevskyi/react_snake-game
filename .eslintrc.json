@@ -28,7 +28,6 @@
     "camelcase": "off",
     "arrow-parens":"off",
     "default-case": "off",
-    "no-console": "warn",
     "no-trailing-spaces": "off",
     "import/prefer-default-export" : "off",
     "no-underscore-dangle": "off",
@@ -39,6 +38,11 @@
     "no-useless-return": "off",
     "react/jsx-props-no-spreading": "off",
     "consistent-return": "off",
+    "react/require-default-props": "off",
+    "no-console": [
+      "warn",
+      { "allow": ["error"] }
+    ],
     "import/extensions": [
       "error",
       {
@@ -49,15 +53,27 @@
         "json": "always"
       }
     ],
-    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }]
+    "eslint-plugin-import/no-unresolved": "off",
+    "no-plusplus": ["error", { "allowForLoopAfterthoughts": true }],
+    "react/jsx-filename-extension": [
+      2,
+      {
+        "extensions": [
+          ".js",
+         ".jsx",
+         ".ts",
+         ".tsx"
+        ]
+      }
+    ]
   },
   "overrides": [
     {
       "files": [
-        "src/redux/*Slice.js",
-        "src/redux/*/*Slice.js",
-        "src/redux/*/*/*Reducer.js",
-        "src/redux/*/*/*/*Reducer.js"
+        "./src/redux/*Slice.js",
+        "./src/redux/*/*Slice.js",
+        "./src/redux/*/*/*Reducer.js",
+        "./src/redux/*/*/*/*Reducer.js"
       ],
       "rules": {
         "no-param-reassign": "off"
