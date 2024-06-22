@@ -8,13 +8,16 @@ import {
   styled,
 } from '@mui/material';
 
-const BOARD_SIZE = 10;
+type StyledBoxCustomProps = {
+  cellFullness: 'food' | 'snake' | 0,
+};
+
+const BOARD_SIZE = 15;
 
 const StyledBoardBox = styled(Box)({
   width: '100%',
   height: '100%',
   maxWidth: '500px',
-  maxHeight: '1000px',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -27,11 +30,26 @@ const StyledBoardRowBox = styled(Box)({
   width: '100%',
 });
 
-const StyledBoardCellBox = styled(Box)({
-  width: '100%',
-  aspectRatio: '1',
-  outline: '1px solid rgb(134, 154, 189)',
-  flex: '1',
+const StyledBoardCellBox = styled(
+  Box,
+  { shouldForwardProp: (prop) => prop !== 'cellFullness' },
+)<StyledBoxCustomProps>(({ cellFullness }) => {
+  let cellColor;
+
+  if (cellFullness === 'snake') {
+    cellColor = 'green';
+  } else if (cellFullness === 'food') {
+    cellColor = 'red';
+  } else {
+    cellColor = '';
+  }
+
+  return {
+    width: '100%',
+    aspectRatio: '1',
+    outline: '1px solid rgb(134, 154, 189)',
+    backgroundColor: cellColor,
+  };
 });
 
 export const Board: React.FC = () => {
@@ -43,9 +61,10 @@ export const Board: React.FC = () => {
     <StyledBoardBox>
       {board.map(row => (
         <StyledBoardRowBox key={uuid()}>
-          {row.map(_cell => (
+          {row.map(cell => (
             <StyledBoardCellBox
               key={uuid()}
+              cellFullness={cell}
             />
           ))}
         </StyledBoardRowBox>
