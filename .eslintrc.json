@@ -76,7 +76,8 @@
         "./src/redux/*/*/*/*Reducer.js"
       ],
       "rules": {
-        "no-param-reassign": "off"
+        "no-param-reassign": "off",
+        "no-unused-vars": "off"
       }
     }
   ],
