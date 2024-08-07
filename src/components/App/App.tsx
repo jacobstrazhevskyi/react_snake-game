@@ -14,10 +14,8 @@ const StyledContainer = styled(Container)({
   overflow: 'hidden',
 });
 
-const App: React.FC = () => (
+export const App: React.FC = () => (
   <StyledContainer>
     <Board />
   </StyledContainer>
 );
-
-export default App;
