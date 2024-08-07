@@ -76,10 +76,6 @@ const StyledCellBoxFood = styled(Box)({
   backgroundColor: 'red',
 });
 
-type PrevDirection = {
-  current: Directions,
-};
-
 export const Board: React.FC = () => {
   const hasRendered = useRef(false);
 
