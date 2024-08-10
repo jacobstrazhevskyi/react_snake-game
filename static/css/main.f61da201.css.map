@@ -1,1 +1,1 @@
-{"version":3,"file":"static/css/main.f61da201.css","mappings":"AAAA,KAEE,kBAAoB,CADpB,eAEF","sources":["reset.css"],"sourcesContent":["body {\n  overflow: hidden;\n  margin: 0 !important;\n}\n"],"names":[],"sourceRoot":""}
+{"version":3,"file":"static/css/main.f61da201.css","mappings":"AAAA,KAEE,kBAAoB,CADpB,eAEF","sources":["reset.css"],"sourcesContent":["body {\r\n  overflow: hidden;\r\n  margin: 0 !important;\r\n}\r\n"],"names":[],"sourceRoot":""}
