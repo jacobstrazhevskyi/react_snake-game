@@ -1,63 +1,71 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-unused-vars */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Board } from '../types/Board';
 import { Cell } from '../types/Cell';
 import { Snake } from '../types/Snake';
+import { Directions } from '../types/Directions';
 
-type Direction = 'right' | 'left' | 'up' | 'down';
+interface InitialState {
+  board: Board,
+  snake: Cell[],
+  food: Cell | null,
+  gameOver: boolean,
+  score: number,
+}
+
+type MoveSnakeProps = {
+  direction: Directions,
+  snake: Cell[],
+}
 
 const BOARD_SIZE = 15;
-const initialState: Board = new Array(BOARD_SIZE)
-  .fill({
-    type: 0,
-  }).map(_row => new Array(BOARD_SIZE).fill({
-    type: 0,
-  }));
+
+const initialState: InitialState = {
+  board: new Array(BOARD_SIZE)
+    .fill({
+      type: 0,
+    }).map(_row => new Array(BOARD_SIZE).fill({
+      type: 0,
+    })),
+  snake: [
+    { type: 'snake', snakeObject: { y: 6, x: 2 } },
+    { type: 'snake', snakeObject: { y: 6, x: 3 } },
+    { type: 'snake', snakeObject: { y: 6, x: 4 } },
+  ],
+  food: { type: 'food' },
+  score: 0,
+  gameOver: false,
+};
 
 const boardSlice = createSlice({
   name: 'board',
   initialState,
   reducers: {
-    setSnake: (board, action: PayloadAction<Cell[]>) => {
+    setSnake: (state, action: PayloadAction<Cell[]>) => {
       const snake = action.payload;
 
-      const newBoard = board;
-
-      snake.forEach(cell => {
-        const {
-          x,
-          y,
-        } = cell.snakeObject as Snake;
-
-        newBoard[y][x] = cell;
+      state.board.forEach(row => {
+        row.forEach(cell => {
+          if (cell.type === 'snake') {
+            cell.type = 0;
+          }
+        });
       });
 
-      return newBoard;
+      snake.forEach(cell => {
+        const { x, y } = cell.snakeObject as Snake;
+        state.board[y][x] = cell;
+      });
     },
-    clearBoard: (board) => {
-      let newBoard = board;
-
-      newBoard = newBoard.map(row => row.map(
-        cell => {
-          if (cell.type === 'food') {
-            return cell;
-          }
-
-          return { type: 0 };
-        },
-      ));
-
-      return newBoard;
-    },
-    spawnFood: (board) => {
-      const newBoard = board;
+    spawnFood: (state) => {
+      const newBoard = state.board;
 
       const checkIfAlreadySpawned = () => {
         const hasAnyFood = newBoard.map(row => row.filter(
           cell => cell.type === 'food',
         )).filter(elem => elem.length).length;
 
-        // console.log(hasAnyFood);
         return hasAnyFood;
       };
 
@@ -66,20 +74,102 @@ const boardSlice = createSlice({
       let y = Math.floor(Math.random() * newBoard.length);
       let x = Math.floor(Math.random() * newBoard[y].length);
 
-      const { type } = newBoard[y][x];
+      let { type } = newBoard[y][x];
 
       while (type === 'snake') {
         y = Math.floor(Math.random() * newBoard.length);
         x = Math.floor(Math.random() * newBoard[y].length);
+        type = newBoard[y][x].type;
       }
 
-      newBoard[y][x].type = 'food';
-      newBoard[y][x].foodObject = {
-        x,
-        y,
+      const foodObject: Cell = {
+        type: 'food',
+        foodObject: { x, y },
       };
 
-      return newBoard;
+      newBoard[y][x] = foodObject;
+
+      state.food = foodObject;
+      state.board = newBoard;
+    },
+    spawnSnake: (state) => {
+      const newSnake: Cell[] = [];
+
+      const y = 6;
+      const tailXCoordinate = 2;
+
+      for (let i = 0, xCoordinate = tailXCoordinate; i < 3; i++, xCoordinate++) {
+        newSnake.push({
+          type: 'snake',
+          snakeObject: {
+            x: xCoordinate,
+            y,
+          },
+        });
+      }
+
+      state.snake = newSnake;
+    },
+    moveSnake: (state, action: PayloadAction<MoveSnakeProps>) => {
+      const { direction } = action.payload;
+
+      const {
+        snake,
+      } = state;
+
+      const head = snake[snake.length - 1];
+
+      if (!head.snakeObject) return;
+
+      const { x, y } = head.snakeObject;
+      let newX = x;
+      let newY = y;
+
+      switch (direction) {
+        case 'right':
+          newX += 1;
+          break;
+        case 'left':
+          newX -= 1;
+          break;
+        case 'up':
+          newY -= 1;
+          break;
+        case 'down':
+          newY += 1;
+          break;
+        default:
+          return;
+      }
+
+      // Collisions and self-collision checks
+      if (
+        newX < 0 || newX + 1 === 16 
+        || newY < 0 || newY + 1 === 16 
+        || state.board[newY][newX].type === 'snake'
+      ) {
+        state.gameOver = true;
+        return;
+      }
+
+      const newHead = { ...head, snakeObject: { x: newX, y: newY } };
+      const newSnake = [...snake, newHead];
+      const { food } = state;
+
+      if (food && newX === food.foodObject?.x && newY === food.foodObject?.y) {
+        state.score += 5;
+        state.food = null;
+      } else {
+        newSnake.shift();
+      }
+
+      state.snake = newSnake;
+    },
+    resetScore: (state) => {
+      state.score = 0;
+    },
+    setGameOver: (state, action: PayloadAction<boolean>) => {
+      state.gameOver = action.payload;
     },
   },
 });
@@ -87,7 +177,10 @@ const boardSlice = createSlice({
 export const {
   spawnFood,
   setSnake,
-  clearBoard,
+  moveSnake,
+  spawnSnake,
+  setGameOver,
+  resetScore,
 } = boardSlice.actions;
 
 export default boardSlice.reducer;
