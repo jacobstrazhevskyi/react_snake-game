@@ -11,19 +11,23 @@ import uuid from 'react-uuid';
 import {
   Box,
   styled,
+  Typography,
 } from '@mui/material';
 import { useAppDispatch } from '../../utils/hooks/useAppDispatch';
 import { useAppSelector } from '../../utils/hooks/useAppSelector';
-import { spawnFood, setSnake, clearBoard } from '../../redux/boardSlice';
 
-import { moveSnake, spawnSnake } from '../../redux/snakeSlice';
+import {
+  spawnFood,
+  setSnake,
+  spawnSnake,
+  moveSnake,
+  setGameOver,
+  resetScore,
+} from '../../redux/boardSlice';
 
-import { Cell } from '../../types/Cell';
 import { Directions } from '../../types/Directions';
-
-type StyledBoxCustomProps = {
-  cellFullness: 'food' | 'snake' | 0,
-};
+import { GameOverModal } from '../GameOverModal';
+import { Cell } from '../../types/Cell';
 
 type StyledBoardBoxCustomProps = {
   cellsSize: number | undefined,
@@ -35,6 +39,7 @@ const StyledBox = styled(Box)({
   width: '100%',
   height: '100%',
   display: 'flex',
+  flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
 });
@@ -76,19 +81,35 @@ const StyledCellBoxFood = styled(Box)({
   backgroundColor: 'red',
 });
 
-export const Board: React.FC = () => {
-  const hasRendered = useRef(false);
+const calculateCellSize = () => {
+  const cellSize = Math.min(window.innerWidth / BOARD_SIZE, window.innerHeight / BOARD_SIZE);
+  const maxCellSize = 500 / BOARD_SIZE;
 
+  if (cellSize > maxCellSize) {
+    return maxCellSize;
+  } 
+
+  return cellSize;
+};
+
+export const Board: React.FC = () => {
   const dispatch = useAppDispatch();
-  const board = useAppSelector(state => state.board);
+
+  const [finalCellSize, setFinalCellSize] = useState<number>(() => calculateCellSize());
+
+  const {
+    board,
+    food,
+    gameOver,
+    score,
+    snake,
+  } = useAppSelector(state => state.board);
 
   let prevWindowSize: number;
+
   const prevDirectionRef = useRef<Directions>('right');
-  const [finalCellSize, setFinalCellSize] = useState<number>();
-
   const gameStarted = useRef(false);
-
-  const snake = useAppSelector(state => state.snake);
+  const hasRendered = useRef(false);
 
   const handleResize = () => {
     const currentWindowSize = window.innerHeight + window.innerWidth;
@@ -97,18 +118,9 @@ export const Board: React.FC = () => {
       return;
     }
 
-    const cellSize = Math.min(window.innerWidth / BOARD_SIZE, window.innerHeight / BOARD_SIZE);
+    setFinalCellSize(calculateCellSize());
 
-    const maxCellSize = 500 / BOARD_SIZE;
-
-    if (cellSize > maxCellSize) {
-      setFinalCellSize(maxCellSize);
-    } else {
-      setFinalCellSize(cellSize);
-    }
-
-    // We add them because it doesnt matter which value we have in each of this
-    prevWindowSize = window.innerHeight + window.innerHeight;
+    prevWindowSize = window.innerHeight + window.innerWidth;
   };
 
   const spawnEntities = () => {
@@ -121,41 +133,41 @@ export const Board: React.FC = () => {
     gameStarted.current = true;
   };
 
-  // THIS USE EFFECT IS TRIGGERED ONCE BEFORE FIRST RENDER
-  useEffect(() => {
-    if (hasRendered.current) {
-      dispatch(clearBoard());
-      spawnEntities();
-      handleResize();
-    } else {
-      hasRendered.current = true;
-    }
-  }, []);
+  const prepareToGame = () => {
+    prevDirectionRef.current = 'right';
+    dispatch(resetScore());
+    spawnEntities();
+    handleResize();
+  };
 
-  useEffect(() => {
-    if (!gameStarted.current) {
+  const onGameOver = () => {
+    dispatch(setGameOver(false));
+    prepareToGame();
+  };
+
+  const handleKeypress = (event: KeyboardEvent) => {
+    if (gameOver) {
+      gameStarted.current = false;
       return;
     }
 
-    const intervalId = setTimeout(() => {
-      dispatch(moveSnake({ direction: prevDirectionRef.current, snake }));
-    }, 200);
+    const { key } = event;
 
-    return () => clearTimeout(intervalId);
-  }, [snake]);
+    if (
+      key !== 'ArrowRight'
+      && key !== 'ArrowLeft'
+      && key !== 'ArrowDown'
+      && key !== 'ArrowUp'
+    ) {
+      return;
+    }
 
-  useEffect(() => {
-    dispatch(clearBoard());
-    dispatch(setSnake(snake));
-  }, [snake]);
-
-  const handleKeypress = (event: KeyboardEvent) => {
     if (!gameStarted.current) {
       startGame();
       return;
     }
 
-    switch (event.key) {
+    switch (key) {
       case 'ArrowLeft':
         if (prevDirectionRef.current === 'right' || prevDirectionRef.current === 'left') {
           return;
@@ -201,7 +213,44 @@ export const Board: React.FC = () => {
     }
   };
 
+  // THIS USE EFFECT IS TRIGGERED ONCE BEFORE FIRST RENDER
   useEffect(() => {
+    if (hasRendered.current) {
+      prepareToGame();
+    } else {
+      hasRendered.current = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!gameStarted.current) {
+      return;
+    }
+
+    if (gameOver) {
+      gameStarted.current = false;
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      dispatch(moveSnake({
+        direction: prevDirectionRef.current,
+        snake,
+      }));
+    }, 200);
+
+    return () => clearInterval(intervalId);
+  }, [snake, gameOver]);
+
+  useEffect(() => {
+    dispatch(setSnake(snake));
+  }, [snake]);
+
+  useEffect(() => {
+    if (!food) {
+      dispatch(spawnFood());
+    }
+
     window.addEventListener('resize', handleResize);
     window.addEventListener('keydown', handleKeypress);
 
@@ -211,10 +260,17 @@ export const Board: React.FC = () => {
     };
   }, [board]);
 
-  // console.log(board);
-
   return (
     <StyledBox>
+      <GameOverModal
+        modalOpen={gameOver}
+        onClose={onGameOver}
+      />
+      <Box>
+        <Typography>
+          {`Score: ${score}`}
+        </Typography>
+      </Box>
       <StyledBoardBox
         cellsSize={finalCellSize}
       >
