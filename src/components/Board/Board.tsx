@@ -13,6 +13,9 @@ import {
   styled,
   Typography,
 } from '@mui/material';
+
+import { SwipeableHandlers, useSwipeable } from 'react-swipeable';
+
 import { useAppDispatch } from '../../utils/hooks/useAppDispatch';
 import { useAppSelector } from '../../utils/hooks/useAppSelector';
 
@@ -27,11 +30,13 @@ import {
 
 import { Directions } from '../../types/Directions';
 import { GameOverModal } from '../GameOverModal';
-import { Cell } from '../../types/Cell';
+
 
 type StyledBoardBoxCustomProps = {
   cellsSize: number | undefined,
 }
+
+type Key = 'ArrowRight' | 'ArrowLeft' | 'ArrowDown' | 'ArrowUp'
 
 const BOARD_SIZE = 15;
 
@@ -84,11 +89,11 @@ const StyledCellBoxFood = styled(Box)({
 const calculateCellSize = () => {
   const cellSize = Math.min(window.innerWidth / BOARD_SIZE, window.innerHeight / BOARD_SIZE);
   const maxCellSize = 500 / BOARD_SIZE;
-
+  
   if (cellSize > maxCellSize) {
     return maxCellSize;
   } 
-
+  
   return cellSize;
 };
 
@@ -213,6 +218,21 @@ export const Board: React.FC = () => {
     }
   };
 
+  const getSwipeHandlers = () => {
+    const createKeyboardEvent = (key: Key) => new KeyboardEvent('keydown', { key });
+
+    const handlersToReturn = useSwipeable({
+      onSwipedRight: () => handleKeypress(createKeyboardEvent('ArrowRight')),
+      onSwipedLeft: () => handleKeypress(createKeyboardEvent('ArrowLeft')),
+      onSwipedDown: () => handleKeypress(createKeyboardEvent('ArrowDown')),
+      onSwipedUp: () => handleKeypress(createKeyboardEvent('ArrowUp')),
+    });
+
+    return handlersToReturn;
+  };
+
+  const handlers = getSwipeHandlers();
+
   // THIS USE EFFECT IS TRIGGERED ONCE BEFORE FIRST RENDER
   useEffect(() => {
     if (hasRendered.current) {
@@ -273,6 +293,7 @@ export const Board: React.FC = () => {
       </Box>
       <StyledBoardBox
         cellsSize={finalCellSize}
+        {...handlers}
       >
         {board.map(row => (
           <StyledRowBox key={uuid()}>
