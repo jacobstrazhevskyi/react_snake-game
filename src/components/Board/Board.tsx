@@ -30,7 +30,7 @@ import {
 
 import { Directions } from '../../types/Directions';
 import { GameOverModal } from '../GameOverModal';
-
+import useLocalStorage from '../../utils/hooks/useLocalStorage';
 
 type StyledBoardBoxCustomProps = {
   cellsSize: number | undefined,
@@ -86,21 +86,33 @@ const StyledCellBoxFood = styled(Box)({
   backgroundColor: 'red',
 });
 
+const StyledScoreBox = styled(Box)({
+  display: 'flex',
+  width: '100%',
+  justifyContent: 'space-between',
+});
+
 const calculateCellSize = () => {
   const cellSize = Math.min(window.innerWidth / BOARD_SIZE, window.innerHeight / BOARD_SIZE);
   const maxCellSize = 500 / BOARD_SIZE;
-  
+
   if (cellSize > maxCellSize) {
     return maxCellSize;
-  } 
-  
+  }
+
   return cellSize;
+};
+
+const calculateInterval = (initialScore: number) => {
+  const minInterval = 50;
+  const initialInterval = 200;
+  const decrement = Math.floor(initialScore / 5) * 5;
+  const interval = initialInterval - decrement;
+  return interval < minInterval ? minInterval : interval;
 };
 
 export const Board: React.FC = () => {
   const dispatch = useAppDispatch();
-
-  const [finalCellSize, setFinalCellSize] = useState<number>(() => calculateCellSize());
 
   const {
     board,
@@ -109,6 +121,11 @@ export const Board: React.FC = () => {
     score,
     snake,
   } = useAppSelector(state => state.board);
+
+  const [finalCellSize, setFinalCellSize] = useState<number>(() => calculateCellSize());
+  const [moveInterval, setMoveInterval] = useState<number>(200);
+  
+  const [bestScore, setBestScore] = useLocalStorage('bestScore', score);
 
   let prevWindowSize: number;
 
@@ -257,10 +274,15 @@ export const Board: React.FC = () => {
         direction: prevDirectionRef.current,
         snake,
       }));
-    }, 200);
+    }, moveInterval);
 
     return () => clearInterval(intervalId);
   }, [snake, gameOver]);
+
+  useEffect(() => {
+    const newInterval = calculateInterval(score);
+    setMoveInterval(newInterval);
+  }, [score]);
 
   useEffect(() => {
     dispatch(setSnake(snake));
@@ -269,6 +291,10 @@ export const Board: React.FC = () => {
   useEffect(() => {
     if (!food) {
       dispatch(spawnFood());
+    }
+
+    if (score > bestScore) {
+      setBestScore(score);
     }
 
     window.addEventListener('resize', handleResize);
@@ -287,34 +313,42 @@ export const Board: React.FC = () => {
         onClose={onGameOver}
       />
       <Box>
-        <Typography>
-          {`Score: ${score}`}
-        </Typography>
+        <StyledScoreBox>
+          <Typography>
+            {`Score: ${score}`}
+          </Typography>
+          <Typography>
+            {`Best score: ${bestScore}`}
+          </Typography>
+          <Typography>
+            {`Interval: ${moveInterval}`}
+          </Typography>
+        </StyledScoreBox>
+        <StyledBoardBox
+          cellsSize={finalCellSize}
+          {...handlers}
+        >
+          {board.map(row => (
+            <StyledRowBox key={uuid()}>
+              {row.map(cell => (
+                cell.type === 'snake' ? (
+                  <StyledCellBoxSnake
+                    key={uuid()}
+                  />
+                ) : cell.type === 'food' ? (
+                  <StyledCellBoxFood
+                    key={uuid()}
+                  />
+                ) : (
+                  <StyledCellBox
+                    key={uuid()}
+                  />
+                )
+              ))}
+            </StyledRowBox>
+          ))}
+        </StyledBoardBox>
       </Box>
-      <StyledBoardBox
-        cellsSize={finalCellSize}
-        {...handlers}
-      >
-        {board.map(row => (
-          <StyledRowBox key={uuid()}>
-            {row.map(cell => (
-              cell.type === 'snake' ? (
-                <StyledCellBoxSnake
-                  key={uuid()}
-                />
-              ) : cell.type === 'food' ? (
-                <StyledCellBoxFood
-                  key={uuid()}
-                />
-              ) : (
-                <StyledCellBox
-                  key={uuid()}
-                />
-              )
-            ))}
-          </StyledRowBox>
-        ))}
-      </StyledBoardBox>
     </StyledBox>
   );
 };
