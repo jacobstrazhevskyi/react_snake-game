@@ -40,13 +40,26 @@ type Key = 'ArrowRight' | 'ArrowLeft' | 'ArrowDown' | 'ArrowUp'
 
 const BOARD_SIZE = 15;
 
+const StyledTypography = styled(Typography)({
+  '@media (max-width: 680px)': {
+    fontSize: '12px',
+  },
+});
+
 const StyledBox = styled(Box)({
-  width: '100%',
+  width: '100%',  
   height: '100%',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
+});
+
+const StyledContentBox = styled(Box)({
+  '@media (max-height: 550px)': {
+    display: 'flex',
+    flexDirection: 'row',
+  },
 });
 
 const StyledBoardBox = styled(Box, {
@@ -90,6 +103,13 @@ const StyledScoreBox = styled(Box)({
   display: 'flex',
   width: '100%',
   justifyContent: 'space-between',
+
+  '@media (max-height: 550px)': {
+    height: '100%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    marginRight: '10px',
+  },
 });
 
 const calculateCellSize = () => {
@@ -243,7 +263,7 @@ export const Board: React.FC = () => {
       onSwipedLeft: () => handleKeypress(createKeyboardEvent('ArrowLeft')),
       onSwipedDown: () => handleKeypress(createKeyboardEvent('ArrowDown')),
       onSwipedUp: () => handleKeypress(createKeyboardEvent('ArrowUp')),
-    });
+    }); 
 
     return handlersToReturn;
   };
@@ -312,17 +332,14 @@ export const Board: React.FC = () => {
         modalOpen={gameOver}
         onClose={onGameOver}
       />
-      <Box>
+      <StyledContentBox>
         <StyledScoreBox>
-          <Typography>
+          <StyledTypography>
             {`Score: ${score}`}
-          </Typography>
-          <Typography>
+          </StyledTypography>
+          <StyledTypography>
             {`Best score: ${bestScore}`}
-          </Typography>
-          <Typography>
-            {`Interval: ${moveInterval}`}
-          </Typography>
+          </StyledTypography>
         </StyledScoreBox>
         <StyledBoardBox
           cellsSize={finalCellSize}
@@ -348,7 +365,7 @@ export const Board: React.FC = () => {
             </StyledRowBox>
           ))}
         </StyledBoardBox>
-      </Box>
+      </StyledContentBox>
     </StyledBox>
   );
 };
