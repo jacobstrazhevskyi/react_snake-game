@@ -114,6 +114,11 @@ const StyledControlsBox = styled(Box)({
     transform: 'translateX(-50%)',
   },
 
+  '@media (min-width: 670px) and (max-height: 320px)': {
+    left: '60%',
+    transform: 'translateX(-60%)',
+  },
+
   '@media (max-width: 340px) and (min-height: 555px)': {
     position: 'relative',
     left: '0',
@@ -128,6 +133,11 @@ const StyledControlsBox = styled(Box)({
 const StyledGrid = styled(Grid)({
   width: '100%',
   height: '100%',
+
+  '@media (max-height: 290px)': {
+    height: 'max-content',
+    width: '140px',
+  },
 
   '@media (max-width: 340px) and (min-height: 555px)': {
     width: 'max-content',
