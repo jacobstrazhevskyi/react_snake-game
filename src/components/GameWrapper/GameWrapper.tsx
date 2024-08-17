@@ -6,10 +6,16 @@ import React, {
 
 import {
   Box,
+  Button,
+  Grid,
   styled,
 } from '@mui/material';
 
 import { useSwipeable } from 'react-swipeable';
+
+import {
+  ArrowUpward, ArrowDownward, ArrowBack, ArrowForward,
+} from '@mui/icons-material';
 
 import { useAppDispatch } from '../../utils/hooks/useAppDispatch';
 import { useAppSelector } from '../../utils/hooks/useAppSelector';
@@ -36,6 +42,8 @@ type StyledBoardBoxCustomProps = {
 
 type Key = 'ArrowRight' | 'ArrowLeft' | 'ArrowDown' | 'ArrowUp'
 
+const createKeyboardEvent = (key: Key) => new KeyboardEvent('keydown', { key });
+
 const BOARD_SIZE = 15;
 
 const StyledBox = styled(Box)({
@@ -47,10 +55,22 @@ const StyledBox = styled(Box)({
   alignItems: 'center',
 });
 
+const StyledButton = styled(Button)({
+  '@media (max-width: 400px)': {
+    padding: '4px 8px',
+  },
+});
+
 const StyledContentBox = styled(Box)({
+  position: 'relative',
+
   '@media (max-height: 550px)': {
     display: 'flex',
     flexDirection: 'row',
+  },
+
+  '@media (max-width: 670px)': {
+    display: 'block',
   },
 });
 
@@ -62,6 +82,57 @@ const StyledBoardBox = styled(Box, {
   gridTemplateRows: `repeat(${BOARD_SIZE}, ${cellsSize}px)`,
   border: '0.5px solid rgb(134, 154, 189)',
 }));
+
+const StyledMainBox = styled(Box)({
+  display: 'flex',
+  position: 'relative',
+
+  '@media (max-width: 340px) and (min-height: 555px)': {
+    flexDirection: 'column',
+  },
+});
+
+const StyledControlsBox = styled(Box)({
+  marginLeft: '20px',
+
+  '@media (max-width: 850px)': {
+    marginLeft: '0',
+    position: 'absolute',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    bottom: '10%',
+    opacity: '0.6',
+  },
+
+  '@media (max-height: 550px) and (max-width: 850px)': {
+    left: '60%',
+    transform: 'translateX(-60%)',
+  },
+
+  '@media (max-width: 670px) and (max-height: 550px)': {
+    left: '50%',
+    transform: 'translateX(-50%)',
+  },
+
+  '@media (max-width: 340px) and (min-height: 555px)': {
+    position: 'relative',
+    left: '0',
+    transform: 'none',
+    bottom: 0,
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '20px',
+  },
+});
+
+const StyledGrid = styled(Grid)({
+  width: '100%',
+  height: '100%',
+
+  '@media (max-width: 340px) and (min-height: 555px)': {
+    width: 'max-content',
+  },
+});
 
 const calculateCellSize = () => {
   const cellSize = Math.min(window.innerWidth / BOARD_SIZE, window.innerHeight / BOARD_SIZE);
@@ -140,29 +211,29 @@ export const GameWrapper: React.FC = () => {
 
   const handleKeypress = (event: KeyboardEvent) => {
     const { key } = event;
-  
+
     if (gameOver) {
       gameStarted.current = false;
       return;
     }
-  
+
     const allowedKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'];
     if (!allowedKeys.includes(key)) {
       return;
     }
-  
+
     if (!gameStarted.current) {
       startGame();
       return;
     }
-  
+
     const directionMap: { [key: string]: Directions } = {
       ArrowLeft: 'left',
       ArrowRight: 'right',
       ArrowDown: 'down',
       ArrowUp: 'up',
     };
-  
+
     const currentDirection = directionMap[key];
     const oppositeDirections = {
       left: 'right',
@@ -170,27 +241,30 @@ export const GameWrapper: React.FC = () => {
       up: 'down',
       down: 'up',
     };
-  
+
     if (prevDirectionRef.current === oppositeDirections[currentDirection]) {
       return;
     }
-  
+
     prevDirectionRef.current = currentDirection;
-  
+
     dispatch(moveSnake({
       direction: currentDirection,
       snake,
     }));
   };
 
-  const getSwipeHandlers = () => {
-    const createKeyboardEvent = (key: Key) => new KeyboardEvent('keydown', { key });
+  const moveRight = () => handleKeypress(createKeyboardEvent('ArrowRight'));
+  const moveLeft = () => handleKeypress(createKeyboardEvent('ArrowLeft'));
+  const moveDown = () => handleKeypress(createKeyboardEvent('ArrowDown'));
+  const moveUp = () => handleKeypress(createKeyboardEvent('ArrowUp'));
 
+  const getSwipeHandlers = () => {
     const handlersToReturn = useSwipeable({
-      onSwipedRight: () => handleKeypress(createKeyboardEvent('ArrowRight')),
-      onSwipedLeft: () => handleKeypress(createKeyboardEvent('ArrowLeft')),
-      onSwipedDown: () => handleKeypress(createKeyboardEvent('ArrowDown')),
-      onSwipedUp: () => handleKeypress(createKeyboardEvent('ArrowUp')),
+      onSwipedRight: () => moveRight(),
+      onSwipedLeft: () => moveLeft(),
+      onSwipedDown: () => moveDown(),
+      onSwipedUp: () => moveUp(),
     });
 
     return handlersToReturn;
@@ -259,18 +333,54 @@ export const GameWrapper: React.FC = () => {
         modalOpen={gameOver}
         onClose={onGameOver}
       />
-      <StyledContentBox>
-        <ScoreDisplay
-          score={score}
-          bestScore={bestScore}
-        />
-        <StyledBoardBox
-          cellsSize={finalCellSize}
-          {...handlers}
-        >
-          <Board />
-        </StyledBoardBox>
-      </StyledContentBox>
+      <StyledMainBox>
+        <StyledContentBox>
+          <ScoreDisplay
+            score={score}
+            bestScore={bestScore}
+          />
+          <StyledBoardBox
+            cellsSize={finalCellSize}
+            {...handlers}
+          >
+            <Board />
+          </StyledBoardBox>
+        </StyledContentBox>
+        <StyledControlsBox>
+          <StyledGrid container direction="column" alignItems="center" justifyContent="center" gap={1}>
+            <Grid item>
+              <StyledButton 
+                variant="contained"
+                onClick={moveUp}
+              >
+                <ArrowUpward />
+              </StyledButton>
+            </Grid>
+            <Grid item container direction="row" justifyContent="space-between" gap={3}>
+              <StyledButton
+                variant="contained"
+                onClick={moveLeft}
+              >
+                <ArrowBack />
+              </StyledButton>
+              <StyledButton
+                variant="contained"
+                onClick={moveRight}
+              >
+                <ArrowForward />
+              </StyledButton>
+            </Grid>
+            <Grid item>
+              <StyledButton
+                variant="contained"
+                onClick={moveDown}
+              >
+                <ArrowDownward />
+              </StyledButton>
+            </Grid>
+          </StyledGrid>
+        </StyledControlsBox>
+      </StyledMainBox>
     </StyledBox>
   );
 };
