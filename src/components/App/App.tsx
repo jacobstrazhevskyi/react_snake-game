@@ -5,7 +5,7 @@ import {
   styled,
 } from '@mui/material';
 
-import { Board } from '../Board';
+import { GameWrapper } from '../GameWrapper';
 
 import '../../reset.css';
 
@@ -16,6 +16,6 @@ const StyledContainer = styled(Container)({
 
 export const App: React.FC = () => (
   <StyledContainer>
-    <Board />
+    <GameWrapper />
   </StyledContainer>
 );
