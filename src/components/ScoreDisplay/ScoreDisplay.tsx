@@ -22,11 +22,25 @@ const StyledBox = styled(Box)({
     justifyContent: 'center',
     marginRight: '10px',
   },
+
+  '@media (max-width: 670px)': {
+    height: 'fit-content',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginRight: '0',
+    position: 'absolute',
+    top: '10px',
+  },
 });
 
 const StyledTypography = styled(Typography)({
   '@media (max-width: 680px)': {
     fontSize: '12px',
+  },
+
+  '@media (max-width: 670px)': {
+    margin: '0 10px',
+    fontWeight: 'bold',
   },
 });
 
