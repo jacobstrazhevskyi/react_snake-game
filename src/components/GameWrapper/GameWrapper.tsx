@@ -6,19 +6,16 @@ import React, {
 
 import {
   Box,
-  Button,
-  Grid,
   styled,
 } from '@mui/material';
 
 import { useSwipeable } from 'react-swipeable';
 
-import {
-  ArrowUpward, ArrowDownward, ArrowBack, ArrowForward,
-} from '@mui/icons-material';
-
 import { useAppDispatch } from '../../utils/hooks/useAppDispatch';
 import { useAppSelector } from '../../utils/hooks/useAppSelector';
+import useLocalStorage from '../../utils/hooks/useLocalStorage';
+
+import { Directions } from '../../types/Directions';
 
 import {
   spawnFood,
@@ -27,24 +24,47 @@ import {
   moveSnake,
   setGameOver,
   resetScore,
-} from '../../redux/boardSlice';
+} from '../../redux/gameSlice';
 
-import { Directions } from '../../types/Directions';
 import { GameOverModal } from '../GameOverModal';
-import useLocalStorage from '../../utils/hooks/useLocalStorage';
 import { ScoreDisplay } from '../ScoreDisplay/ScoreDisplay';
 
 import { Board } from '../Board';
+import { ControlsButtons } from '../ControlsButtons';
+
+import { getCalculatedBoardCellSize } from '../../utils/getCalculatedBoardCellSize';
+import { getCalculatedSnakeMoveInterval } from '../../utils/getCalculatedSnakeMoveInterval';
+
+import { aux as settingsAux } from '../../auх/settings';
+import { aux as directionsNamesAux } from '../../auх/directionsNames';
+import { aux as keyboardArrowKeysAux } from '../../auх/keyboardArrowKeys';
+import { aux as localStorageKeysAux } from '../../auх/localStorageKeys';
+
+type Key = 'ArrowRight' | 'ArrowLeft' | 'ArrowDown' | 'ArrowUp';
 
 type StyledBoardBoxCustomProps = {
   cellsSize: number | undefined,
 }
 
-type Key = 'ArrowRight' | 'ArrowLeft' | 'ArrowDown' | 'ArrowUp'
+const { BOARD_SIZE } = settingsAux.settings;
+
+const { bestScore: bestScoreKey } = localStorageKeysAux.localStorageKeys;
+
+const {
+  right,
+  left,
+  down,
+  up,
+} = directionsNamesAux.directions;
+
+const {
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+} = keyboardArrowKeysAux.keys as {[key: string]: Key};
 
 const createKeyboardEvent = (key: Key) => new KeyboardEvent('keydown', { key });
-
-const BOARD_SIZE = 15;
 
 const StyledBox = styled(Box)({
   width: '100%',
@@ -53,12 +73,6 @@ const StyledBox = styled(Box)({
   flexDirection: 'column',
   justifyContent: 'center',
   alignItems: 'center',
-});
-
-const StyledButton = styled(Button)({
-  '@media (max-width: 400px)': {
-    padding: '4px 8px',
-  },
 });
 
 const StyledContentBox = styled(Box)({
@@ -92,77 +106,6 @@ const StyledMainBox = styled(Box)({
   },
 });
 
-const StyledControlsBox = styled(Box)({
-  marginLeft: '20px',
-
-  '@media (max-width: 850px)': {
-    marginLeft: '0',
-    position: 'absolute',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    bottom: '10%',
-    opacity: '0.6',
-  },
-
-  '@media (max-height: 550px) and (max-width: 850px)': {
-    left: '60%',
-    transform: 'translateX(-60%)',
-  },
-
-  '@media (max-width: 670px) and (max-height: 550px)': {
-    left: '50%',
-    transform: 'translateX(-50%)',
-  },
-
-  '@media (min-width: 670px) and (max-height: 320px)': {
-    left: '60%',
-    transform: 'translateX(-60%)',
-  },
-
-  '@media (max-width: 340px) and (min-height: 555px)': {
-    position: 'relative',
-    left: '0',
-    transform: 'none',
-    bottom: 0,
-    display: 'flex',
-    justifyContent: 'center',
-    marginTop: '20px',
-  },
-});
-
-const StyledGrid = styled(Grid)({
-  width: '100%',
-  height: '100%',
-
-  '@media (max-height: 290px)': {
-    height: 'max-content',
-    width: '140px',
-  },
-
-  '@media (max-width: 340px) and (min-height: 555px)': {
-    width: 'max-content',
-  },
-});
-
-const calculateCellSize = () => {
-  const cellSize = Math.min(window.innerWidth / BOARD_SIZE, window.innerHeight / BOARD_SIZE);
-  const maxCellSize = 500 / BOARD_SIZE;
-
-  if (cellSize > maxCellSize) {
-    return maxCellSize;
-  }
-
-  return cellSize;
-};
-
-const calculateInterval = (initialScore: number) => {
-  const minInterval = 50;
-  const initialInterval = 200;
-  const decrement = Math.floor(initialScore / 5) * 5;
-  const interval = initialInterval - decrement;
-  return interval < minInterval ? minInterval : interval;
-};
-
 export const GameWrapper: React.FC = () => {
   const dispatch = useAppDispatch();
 
@@ -172,16 +115,16 @@ export const GameWrapper: React.FC = () => {
     gameOver,
     score,
     snake,
-  } = useAppSelector(state => state.board);
+  } = useAppSelector(state => state.game);
 
-  const [finalCellSize, setFinalCellSize] = useState<number>(() => calculateCellSize());
+  const [finalCellSize, setFinalCellSize] = useState<number>(() => getCalculatedBoardCellSize());
   const [moveInterval, setMoveInterval] = useState<number>(200);
 
-  const [bestScore, setBestScore] = useLocalStorage('bestScore', score);
+  const [bestScore, setBestScore] = useLocalStorage(bestScoreKey, score);
 
   let prevWindowSize: number;
 
-  const prevDirectionRef = useRef<Directions>('right');
+  const prevDirectionRef = useRef<Directions>(right);
   const gameStarted = useRef(false);
   const hasRendered = useRef(false);
 
@@ -192,7 +135,7 @@ export const GameWrapper: React.FC = () => {
       return;
     }
 
-    setFinalCellSize(calculateCellSize());
+    setFinalCellSize(getCalculatedBoardCellSize());
 
     prevWindowSize = window.innerHeight + window.innerWidth;
   };
@@ -208,7 +151,7 @@ export const GameWrapper: React.FC = () => {
   };
 
   const prepareToGame = () => {
-    prevDirectionRef.current = 'right';
+    prevDirectionRef.current = right;
     dispatch(resetScore());
     spawnEntities();
     handleResize();
@@ -227,8 +170,8 @@ export const GameWrapper: React.FC = () => {
       return;
     }
 
-    const allowedKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'];
-    if (!allowedKeys.includes(key)) {
+    const allowedKeys = [ArrowRight, ArrowLeft, ArrowDown, ArrowUp];
+    if (!allowedKeys.includes(key as Key)) {
       return;
     }
 
@@ -238,21 +181,26 @@ export const GameWrapper: React.FC = () => {
     }
 
     const directionMap: { [key: string]: Directions } = {
-      ArrowLeft: 'left',
-      ArrowRight: 'right',
-      ArrowDown: 'down',
-      ArrowUp: 'up',
+      ArrowLeft: left,
+      ArrowRight: right,
+      ArrowDown: down,
+      ArrowUp: up,
     };
 
     const currentDirection = directionMap[key];
+
     const oppositeDirections = {
-      left: 'right',
-      right: 'left',
-      up: 'down',
-      down: 'up',
+      left: right,
+      right: left,
+      up: down,
+      down: up,
     };
 
     if (prevDirectionRef.current === oppositeDirections[currentDirection]) {
+      return;
+    }
+
+    if (prevDirectionRef.current === currentDirection) {
       return;
     }
 
@@ -264,12 +212,21 @@ export const GameWrapper: React.FC = () => {
     }));
   };
 
-  const moveRight = () => handleKeypress(createKeyboardEvent('ArrowRight'));
-  const moveLeft = () => handleKeypress(createKeyboardEvent('ArrowLeft'));
-  const moveDown = () => handleKeypress(createKeyboardEvent('ArrowDown'));
-  const moveUp = () => handleKeypress(createKeyboardEvent('ArrowUp'));
+  const moveHandlers = useRef({
+    moveRight: () => handleKeypress(createKeyboardEvent(ArrowRight)),
+    moveLeft: () => handleKeypress(createKeyboardEvent(ArrowLeft)),
+    moveDown: () => handleKeypress(createKeyboardEvent(ArrowDown)),
+    moveUp: () => handleKeypress(createKeyboardEvent(ArrowUp)),
+  });
 
   const getSwipeHandlers = () => {
+    const {
+      moveDown,
+      moveLeft,
+      moveRight,
+      moveUp,
+    } = moveHandlers.current;
+
     const handlersToReturn = useSwipeable({
       onSwipedRight: () => moveRight(),
       onSwipedLeft: () => moveLeft(),
@@ -311,7 +268,7 @@ export const GameWrapper: React.FC = () => {
   }, [snake, gameOver]);
 
   useEffect(() => {
-    const newInterval = calculateInterval(score);
+    const newInterval = getCalculatedSnakeMoveInterval(score);
     setMoveInterval(newInterval);
   }, [score]);
 
@@ -356,40 +313,9 @@ export const GameWrapper: React.FC = () => {
             <Board />
           </StyledBoardBox>
         </StyledContentBox>
-        <StyledControlsBox>
-          <StyledGrid container direction="column" alignItems="center" justifyContent="center" gap={1}>
-            <Grid item>
-              <StyledButton 
-                variant="contained"
-                onClick={moveUp}
-              >
-                <ArrowUpward />
-              </StyledButton>
-            </Grid>
-            <Grid item container direction="row" justifyContent="space-between" gap={3}>
-              <StyledButton
-                variant="contained"
-                onClick={moveLeft}
-              >
-                <ArrowBack />
-              </StyledButton>
-              <StyledButton
-                variant="contained"
-                onClick={moveRight}
-              >
-                <ArrowForward />
-              </StyledButton>
-            </Grid>
-            <Grid item>
-              <StyledButton
-                variant="contained"
-                onClick={moveDown}
-              >
-                <ArrowDownward />
-              </StyledButton>
-            </Grid>
-          </StyledGrid>
-        </StyledControlsBox>
+        <ControlsButtons
+          {...{ ...moveHandlers.current }}
+        />
       </StyledMainBox>
     </StyledBox>
   );

@@ -7,6 +7,10 @@ import {
   Typography, 
 } from '@mui/material';
 
+import { aux as gameOverAux } from '../../auх/gameOverModalTitle';
+
+const { gameOverTitle } = gameOverAux;
+
 type Props = {
   modalOpen: boolean,
   onClose: () => void,
@@ -24,6 +28,10 @@ const StyledBox = styled(Box)({
 const StyledTypography = styled(Typography)({
   color: 'red',
   fontSize: '40px',
+
+  '@media (max-width: 400px)': {
+    fontSize: '30px',
+  },
 });
 
 export const GameOverModal: React.FC<Props> = ({
@@ -36,7 +44,7 @@ export const GameOverModal: React.FC<Props> = ({
   >
     <StyledBox>
       <StyledTypography>
-        Game Over
+        {gameOverTitle}
       </StyledTypography>
     </StyledBox>
   </Modal>

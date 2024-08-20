@@ -35,7 +35,7 @@ const StyledCellBoxFood = styled(Box)({
 });
 
 export const Board: React.FC = () => {
-  const board = useAppSelector(state => state.board.board);
+  const board = useAppSelector(state => state.game.board);
 
   return (
     <>
