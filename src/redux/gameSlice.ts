@@ -6,6 +6,12 @@ import { Cell } from '../types/Cell';
 import { Snake } from '../types/Snake';
 import { Directions } from '../types/Directions';
 
+import { aux as settingsAux } from '../auх/settings';
+
+const {
+  BOARD_SIZE,
+} = settingsAux.settings;
+
 interface InitialState {
   board: Board,
   snake: Cell[],
@@ -18,8 +24,6 @@ type MoveSnakeProps = {
   direction: Directions,
   snake: Cell[],
 }
-
-const BOARD_SIZE = 15;
 
 const initialState: InitialState = {
   board: new Array(BOARD_SIZE)
@@ -38,8 +42,8 @@ const initialState: InitialState = {
   gameOver: false,
 };
 
-const boardSlice = createSlice({
-  name: 'board',
+const gameSlice = createSlice({
+  name: 'game',
   initialState,
   reducers: {
     setSnake: (state, action: PayloadAction<Cell[]>) => {
@@ -181,6 +185,6 @@ export const {
   spawnSnake,
   setGameOver,
   resetScore,
-} = boardSlice.actions;
+} = gameSlice.actions;
 
-export default boardSlice.reducer;
+export default gameSlice.reducer;
